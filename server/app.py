@@ -14,32 +14,96 @@ app.json.compact = False
 migrate = Migrate(app, db)
 db.init_app(app)
 
-# TODO: add functionality to all routes
 
-@app.route('/events')
+
+# Return all events.
+@app.route('/events', methods=['GET'])
 def get_events():
-    pass
+    events = Event.query.all()
+
+    return jsonify([
+        {
+            "id": event.id,
+            "name": event.name,
+            "location": event.location
+        }
+        for event in events
+    ]), 200
 
 
-@app.route('/events/<int:id>/sessions')
+# Return all sessions belonging to a specific event.
+@app.route('/events/<int:id>/sessions', methods=['GET'])
 def get_event_sessions(id):
-    pass
+    event = db.session.get(Event, id)
+
+    if event is None:
+        return jsonify({"error": "Event not found"}), 404
+
+    return jsonify([
+        {
+            "id": session.id,
+            "title": session.title,
+            "start_time": session.start_time.isoformat()
+        }
+        for session in event.sessions
+    ]), 200
 
 
-@app.route('/speakers')
+# Return all speakers.
+@app.route('/speakers', methods=['GET'])
 def get_speakers():
-    pass
+    speakers = Speaker.query.all()
+
+    return jsonify([
+        {
+            "id": speaker.id,
+            "name": speaker.name
+        }
+        for speaker in speakers
+    ]), 200
 
 
-@app.route('/speakers/<int:id>')
+# Return one speaker and their bio.
+@app.route('/speakers/<int:id>', methods=['GET'])
 def get_speaker(id):
-    pass
+    speaker = db.session.get(Speaker, id)
+
+    if speaker is None:
+        return jsonify({"error": "Speaker not found"}), 404
+
+    return jsonify({
+        "id": speaker.id,
+        "name": speaker.name,
+        "bio_text": (
+            speaker.bio.bio_text
+            if speaker.bio is not None
+            else "No bio available"
+        )
+    }), 200
 
 
-@app.route('/sessions/<int:id>/speakers')
+# Return all speakers associated with a specific session.
+@app.route('/sessions/<int:id>/speakers', methods=['GET'])
 def get_session_speakers(id):
-    pass
+    session = db.session.get(Session, id)
+
+    if session is None:
+        return jsonify({"error": "Session not found"}), 404
+
+    return jsonify([
+        {
+            "id": speaker.id,
+            "name": speaker.name,
+            "bio_text": (
+                speaker.bio.bio_text
+                if speaker.bio is not None
+                else "No bio available"
+            )
+        }
+        for speaker in session.speakers
+    ]), 200
 
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
+
