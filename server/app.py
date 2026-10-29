@@ -1,23 +1,19 @@
-#!/usr/bin/env python3
 
 from flask import Flask, jsonify
 from flask_migrate import Migrate
 
-from models import db, Event, Session, Speaker, Bio
+from models import db, Event, Session, Speaker
 
 app = Flask(__name__)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///eventwise.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.json.compact = False
 
-migrate = Migrate(app, db)
 db.init_app(app)
+migrate = Migrate(app, db)
 
 
-
-# Return all events.
-@app.route('/events', methods=['GET'])
+@app.get("/events")
 def get_events():
     events = Event.query.all()
 
@@ -31,8 +27,7 @@ def get_events():
     ]), 200
 
 
-# Return all sessions belonging to a specific event.
-@app.route('/events/<int:id>/sessions', methods=['GET'])
+@app.get("/events/<int:id>/sessions")
 def get_event_sessions(id):
     event = db.session.get(Event, id)
 
@@ -49,8 +44,7 @@ def get_event_sessions(id):
     ]), 200
 
 
-# Return all speakers.
-@app.route('/speakers', methods=['GET'])
+@app.get("/speakers")
 def get_speakers():
     speakers = Speaker.query.all()
 
@@ -63,8 +57,7 @@ def get_speakers():
     ]), 200
 
 
-# Return one speaker and their bio.
-@app.route('/speakers/<int:id>', methods=['GET'])
+@app.get("/speakers/<int:id>")
 def get_speaker(id):
     speaker = db.session.get(Speaker, id)
 
@@ -82,8 +75,7 @@ def get_speaker(id):
     }), 200
 
 
-# Return all speakers associated with a specific session.
-@app.route('/sessions/<int:id>/speakers', methods=['GET'])
+@app.get("/sessions/<int:id>/speakers")
 def get_session_speakers(id):
     session = db.session.get(Session, id)
 
@@ -104,6 +96,6 @@ def get_session_speakers(id):
     ]), 200
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(port=5555, debug=True)
 

@@ -1,13 +1,9 @@
+
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
 
-
-metadata = MetaData(naming_convention={
-    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
-})
-
+metadata = MetaData()
 db = SQLAlchemy(metadata=metadata)
-
 
 # Association table connecting sessions and speakers.
 session_speakers = db.Table(
@@ -16,14 +12,14 @@ session_speakers = db.Table(
         "session_id",
         db.Integer,
         db.ForeignKey("sessions.id"),
-        primary_key=True,
+        primary_key=True
     ),
     db.Column(
         "speaker_id",
         db.Integer,
         db.ForeignKey("speakers.id"),
-        primary_key=True,
-    ),
+        primary_key=True
+    )
 )
 
 
@@ -34,15 +30,15 @@ class Event(db.Model):
     name = db.Column(db.String, nullable=False)
     location = db.Column(db.String, nullable=False)
 
-    # An event can contain many sessions.
+    # Deleting an event also deletes its sessions.
     sessions = db.relationship(
         "Session",
         back_populates="event",
-        cascade="all, delete-orphan",
+        cascade="all, delete-orphan"
     )
 
     def __repr__(self):
-        return f"<Event {self.id}, {self.name}, {self.location}>"
+        return f"<Event {self.id}: {self.name}>"
 
 
 class Session(db.Model):
@@ -50,25 +46,26 @@ class Session(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, nullable=False)
-    start_time = db.Column(db.DateTime)
+    start_time = db.Column(db.DateTime, nullable=False)
     event_id = db.Column(
         db.Integer,
         db.ForeignKey("events.id"),
-        nullable=False,
+        nullable=False
     )
 
-    # Each session belongs to one event.
-    event = db.relationship("Event", back_populates="sessions")
+    event = db.relationship(
+        "Event",
+        back_populates="sessions"
+    )
 
-    # A session can have multiple speakers.
     speakers = db.relationship(
         "Speaker",
         secondary=session_speakers,
-        back_populates="sessions",
+        back_populates="sessions"
     )
 
     def __repr__(self):
-        return f"<Session {self.id}, {self.title}, {self.start_time}>"
+        return f"<Session {self.id}: {self.title}>"
 
 
 class Speaker(db.Model):
@@ -77,39 +74,40 @@ class Speaker(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
 
-    # A speaker has one bio, which is deleted with the speaker.
+    # A speaker can have one bio; deleting the speaker deletes the bio.
     bio = db.relationship(
         "Bio",
         back_populates="speaker",
         uselist=False,
-        cascade="all, delete-orphan",
+        cascade="all, delete-orphan"
     )
 
-    # A speaker can participate in multiple sessions.
     sessions = db.relationship(
         "Session",
         secondary=session_speakers,
-        back_populates="speakers",
+        back_populates="speakers"
     )
 
     def __repr__(self):
-        return f"<Speaker {self.id}, {self.name}>"
+        return f"<Speaker {self.id}: {self.name}>"
 
 
 class Bio(db.Model):
     __tablename__ = "bios"
 
     id = db.Column(db.Integer, primary_key=True)
-    bio_text = db.Column(db.Text, nullable=False)
+    bio_text = db.Column(db.String, nullable=False)
     speaker_id = db.Column(
         db.Integer,
         db.ForeignKey("speakers.id"),
         nullable=False,
-        unique=True,
+        unique=True
     )
 
-    # Each bio belongs to one speaker.
-    speaker = db.relationship("Speaker", back_populates="bio")
+    speaker = db.relationship(
+        "Speaker",
+        back_populates="bio"
+    )
 
     def __repr__(self):
-        return f"<Bio {self.id}, {self.bio_text}>"
+        return f"<Bio {self.id} for Speaker {self.speaker_id}>"
