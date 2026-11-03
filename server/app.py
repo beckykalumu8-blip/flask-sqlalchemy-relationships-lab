@@ -2,16 +2,24 @@
 from flask import Flask, jsonify
 from flask_migrate import Migrate
 
+# Import models using the same import path as the test configuration
 from models import db, Event, Session, Speaker
 
+# Initialize Flask application
 app = Flask(__name__)
 
+# Database configuration
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///eventwise.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+# Initialize SQLAlchemy and Flask-Migrate
 db.init_app(app)
 migrate = Migrate(app, db)
 
+
+# --------------------------------
+# EVENT ENDPOINTS
+# --------------------------------
 
 @app.get("/events")
 def get_events():
@@ -44,6 +52,10 @@ def get_event_sessions(id):
     ]), 200
 
 
+# --------------------------------
+# SPEAKER ENDPOINTS
+# --------------------------------
+
 @app.get("/speakers")
 def get_speakers():
     speakers = Speaker.query.all()
@@ -75,6 +87,10 @@ def get_speaker(id):
     }), 200
 
 
+# --------------------------------
+# SESSION ENDPOINTS
+# --------------------------------
+
 @app.get("/sessions/<int:id>/speakers")
 def get_session_speakers(id):
     session = db.session.get(Session, id)
@@ -95,6 +111,10 @@ def get_session_speakers(id):
         for speaker in session.speakers
     ]), 200
 
+
+# --------------------------------
+# RUN APPLICATION
+# --------------------------------
 
 if __name__ == "__main__":
     app.run(port=5555, debug=True)
